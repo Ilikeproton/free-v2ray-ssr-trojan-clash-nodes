@@ -1,0 +1,33 @@
+{
+  "inbounds": [
+    {
+      "listen": "0.0.0.0",
+      "port": 10609,
+      "protocol": "socks",
+      "settings": {
+        "auth": "noauth",
+        "udp": true
+      }
+    }
+  ],
+  "log": {
+    "loglevel": "warning"
+  },
+  "outbounds": [
+    {
+      "protocol": "shadowsocks",
+      "settings": {
+        "servers": [
+          {
+            "address": "admin.c1.havij.co",
+            "method": "chacha20-ietf-poly1305",
+            "ota": false,
+            "password": "1kVr0KATIJI7mwOF",
+            "port": 443
+          }
+        ]
+      },
+      "streamSettings": {}
+    }
+  ]
+}

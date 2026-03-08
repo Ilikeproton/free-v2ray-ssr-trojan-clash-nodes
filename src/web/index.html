@@ -1,0 +1,1271 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Daxionglink Router Console</title>
+    <script src="./vendor/tailwindcss-cdn.js"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              panel: "#0b1020",
+              panel2: "#121a32",
+              neonBlue: "#38bdf8",
+              neonGreen: "#22c55e",
+              neonPink: "#ec4899",
+              neonOrange: "#fb923c",
+            },
+            boxShadow: {
+              neon: "0 0 18px rgba(56, 189, 248, 0.35)",
+              pink: "0 0 24px rgba(236, 72, 153, 0.25)",
+            },
+          },
+        },
+      };
+    </script>
+    <script src="./vendor/vue.global.prod.js"></script>
+    <script>
+      // Disable browser context menu and F12 shortcut.
+      document.addEventListener(
+        "contextmenu",
+        (event) => {
+          const allowInLinkTable = event.target?.closest?.(
+            '[data-allow-link-menu="1"]',
+          );
+          if (allowInLinkTable) return;
+          event.preventDefault();
+          event.stopPropagation();
+        },
+        true,
+      );
+      document.addEventListener(
+        "keydown",
+        (event) => {
+          if (event.key === "F12" || event.keyCode === 123) {
+            event.preventDefault();
+            event.stopPropagation();
+          }
+        },
+        true,
+      );
+    </script>
+    <style>
+      :root {
+        --bg-main: radial-gradient(
+          circle at 10% 10%,
+          #1e293b 0,
+          #020617 35%,
+          #000000 100%
+        );
+        --bg-card: linear-gradient(
+          145deg,
+          rgba(15, 23, 42, 0.9),
+          rgba(2, 6, 23, 0.95)
+        );
+      }
+      body {
+        background: var(--bg-main);
+        min-height: 100vh;
+        color: #e2e8f0;
+        font-family: "Segoe UI", "PingFang SC", "Noto Sans SC", sans-serif;
+      }
+      * {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(56, 189, 248, 0.62) rgba(15, 23, 42, 0.7);
+      }
+      *::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+      }
+      *::-webkit-scrollbar-track {
+        background: rgba(15, 23, 42, 0.72);
+        border-radius: 999px;
+      }
+      *::-webkit-scrollbar-thumb {
+        border-radius: 999px;
+        border: 2px solid rgba(15, 23, 42, 0.88);
+        background: linear-gradient(180deg, #38bdf8, #2563eb);
+      }
+      *::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(180deg, #67e8f9, #3b82f6);
+      }
+      .glass {
+        background: var(--bg-card);
+        border: 1px solid rgba(148, 163, 184, 0.25);
+        backdrop-filter: blur(8px);
+      }
+      .btn {
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        padding: 0.34rem 0.62rem;
+        border-radius: 0.58rem;
+        font-size: 0.78rem;
+        transition: all 0.18s ease;
+        line-height: 1.2;
+      }
+      .btn-xs {
+        padding: 0.28rem 0.44rem;
+        font-size: 0.72rem;
+        border-radius: 0.5rem;
+      }
+      .btn:hover {
+        transform: translateY(-1px);
+      }
+      .btn-main {
+        background: linear-gradient(135deg, #0ea5e9, #2563eb);
+      }
+      .btn-green {
+        background: linear-gradient(135deg, #16a34a, #22c55e);
+      }
+      .btn-red {
+        background: linear-gradient(135deg, #dc2626, #ef4444);
+      }
+      .btn-violet {
+        background: linear-gradient(135deg, #db2777, #e11d48);
+      }
+      .btn-subtle {
+        background: rgba(30, 41, 59, 0.7);
+      }
+      .site-active {
+        border-color: rgba(56, 189, 248, 0.8);
+        box-shadow: 0 0 14px rgba(56, 189, 248, 0.3);
+      }
+      .console {
+        font-family: Consolas, Menlo, Monaco, monospace;
+      }
+      .context-menu {
+        position: fixed;
+        z-index: 80;
+      }
+      .toast-wrap {
+        position: fixed;
+        right: 16px;
+        bottom: 16px;
+        z-index: 90;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .toast {
+        min-width: 260px;
+        max-width: 420px;
+        border-radius: 12px;
+        padding: 10px 12px;
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        backdrop-filter: blur(6px);
+        background: rgba(15, 23, 42, 0.92);
+        box-shadow: 0 10px 30px rgba(2, 6, 23, 0.45);
+        font-size: 13px;
+      }
+      .toast-info {
+        border-color: rgba(56, 189, 248, 0.45);
+      }
+      .toast-ok {
+        border-color: rgba(34, 197, 94, 0.45);
+      }
+      .toast-warn {
+        border-color: rgba(245, 158, 11, 0.5);
+      }
+      .toast-error {
+        border-color: rgba(239, 68, 68, 0.55);
+      }
+      :root {
+        --link-row-height: 42px;
+        --link-head-height: 42px;
+      }
+      .top-links-wrap {
+        max-height: calc(var(--link-head-height) + var(--link-row-height) * 5);
+        overflow-y: scroll;
+        overflow-x: hidden;
+        scrollbar-gutter: stable;
+      }
+      .top-links-table {
+        width: 100%;
+        table-layout: fixed;
+        border-collapse: collapse;
+      }
+      .top-links-table thead th {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        background: rgba(15, 23, 42, 0.92);
+      }
+      .top-links-row {
+        height: var(--link-row-height);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app" class="min-h-screen p-4 lg:p-6" @click="closeMenu">
+      <header class="glass rounded-2xl p-4 shadow-neon mb-4">
+        <div
+          class="flex flex-col lg:flex-row gap-3 lg:items-center lg:justify-between"
+        >
+          <div>
+            <h1 class="text-xl lg:text-2xl font-bold tracking-wide">
+              <a
+                href="https://github.com/Ilikeproton/free-v2ray-ssr-trojan-clash-nodes"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-slate-100 hover:text-sky-300 underline decoration-sky-400/60"
+                >代理测速 + 代理路由控制台</a
+              >
+            </h1>
+            <p class="text-xs text-slate-400 mt-1">
+              主路由端口 10600，默认站点端口 10601，默认HTTP 10602，子站点
+              10603-10700
+            </p>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button class="btn btn-main" @click="startAll">
+              启动所有（主路由+子进程）
+            </button>
+            <button class="btn btn-green" @click="startRules">
+              启动所有规则
+            </button>
+            <button class="btn btn-violet" @click="killAllXray">
+              关闭所有xray
+            </button>
+            <button class="btn btn-red" @click="stopAll">强杀全部进程</button>
+            <div class="flex gap-2 items-center">
+              <input
+                v-model.number="pidInput"
+                type="number"
+                placeholder="PID"
+                class="px-2 py-1.5 rounded-lg bg-slate-900 border border-slate-600 w-24 text-sm"
+              />
+              <button class="btn btn-violet" @click="killPID">按PID强杀</button>
+              <button class="btn btn-subtle" @click="openSettings">设置</button>
+              <button class="btn btn-subtle" @click="minimizeWindow">
+                缩小
+              </button>
+              <button class="btn btn-subtle" @click="closeApp">
+                关闭程序
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div class="grid grid-cols-1 xl:grid-cols-[350px_1fr] gap-4">
+        <section class="glass rounded-2xl p-4 shadow-pink">
+          <div class="flex justify-between items-center mb-3">
+            <h2 class="text-lg font-semibold">网站表</h2>
+            <button class="btn btn-subtle" @click="openCreate">添加</button>
+          </div>
+          <div class="space-y-2 max-h-[72vh] overflow-y-auto pr-1">
+            <div
+              v-for="site in websites"
+              :key="site.id"
+              class="rounded-xl p-3 border border-slate-700 cursor-pointer"
+              :class="site.id===selectedWebsiteId ? 'site-active' : ''"
+              @click="selectWebsite(site.id)"
+            >
+              <div class="flex justify-between items-center">
+                <div>
+                  <div class="font-semibold">{{ site.name }}</div>
+                  <div class="text-xs text-slate-400">
+                    端口 {{ site.port }} | 匹配 {{ site.match_rule || '*' }}
+                  </div>
+                </div>
+                <span
+                  class="text-xs"
+                  :class="site.running ? 'text-neonGreen' : 'text-slate-400'"
+                >
+                  <span
+                    >{{ site.running ? `运行中 · 代理ID ${site.selected_link_id
+                    || '-'}` : '未启动' }}</span
+                  >
+                  <span
+                    v-if="site.running && site.http_running"
+                    class="ml-1 text-[10px] uppercase tracking-wide text-cyan-300"
+                    >http</span
+                  >
+                </span>
+              </div>
+              <div class="flex flex-nowrap gap-1 mt-2 overflow-x-auto">
+                <button
+                  class="btn btn-main btn-xs shrink-0"
+                  @click.stop="startSite(site.id)"
+                >
+                  启动
+                </button>
+                <button
+                  class="btn btn-red btn-xs shrink-0"
+                  @click.stop="stopSite(site.id)"
+                >
+                  停止
+                </button>
+                <button
+                  class="btn btn-green btn-xs shrink-0"
+                  @click.stop="startSiteHttp(site.id)"
+                >
+                  Http
+                </button>
+                <button
+                  class="btn btn-violet btn-xs shrink-0"
+                  @click.stop="stopSiteHttp(site.id)"
+                >
+                  关
+                </button>
+                <button
+                  class="btn btn-subtle btn-xs shrink-0"
+                  @click.stop="openEdit(site)"
+                >
+                  编辑
+                </button>
+                <button
+                  class="btn btn-subtle btn-xs shrink-0"
+                  @click.stop="removeSite(site)"
+                >
+                  删除
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="grid grid-rows-[auto_1fr] gap-4">
+          <div class="glass rounded-2xl p-4">
+            <div
+              class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 mb-3"
+            >
+              <div>
+                <h2 class="text-lg font-semibold">
+                  前{{ Number(settings.form.top_links_limit || 20) }}测速连接（总{{ Number(totalLinksCount || 0) }}代理连接）
+                </h2>
+                <p class="text-xs text-slate-400">
+                  支持“测试全部网站”或“测试当前网站”；测试时新加入代理优先。
+                </p>
+              </div>
+              <div class="flex gap-2 flex-wrap">
+                <button class="btn btn-green" @click="runSpeedTestAll">
+                  测试全部网站
+                </button>
+                <button class="btn btn-main" @click="runSpeedTestCurrent">
+                  测试当前网站
+                </button>
+                <button class="btn btn-violet" @click="runIPCountryCurrent">
+                  测试当前IP属地
+                </button>
+                <button class="btn btn-subtle" @click="importRemoteBase64Links">
+                  获取免费代理
+                </button>
+                <button class="btn btn-subtle" @click="openImportURLDialog">
+                  导入订阅链接
+                </button>
+                <button class="btn btn-subtle" @click="refreshAll">刷新</button>
+              </div>
+            </div>
+
+            <div class="top-links-wrap rounded-xl border border-slate-700">
+              <table class="top-links-table text-sm">
+                <thead class="bg-slate-900/90 text-slate-300">
+                  <tr>
+                    <th class="text-left p-2 w-10">#</th>
+                    <th class="text-left p-2 w-14">星</th>
+                    <th class="text-left p-2 w-20">连接ID</th>
+                    <th class="text-left p-2 w-28">速度(KB/s)</th>
+                    <th class="text-left p-2 w-24">国家</th>
+                    <th class="text-left p-2 w-40">最近使用</th>
+                    <th class="text-left p-2">连接(60字符)</th>
+                  </tr>
+                </thead>
+                <tbody class="top-links-body">
+                  <tr
+                    v-for="(row, idx) in topLinks"
+                    :key="row.link_id"
+                    class="top-links-row border-t border-slate-800 hover:bg-slate-800/40"
+                    :class="row.selected ? 'bg-sky-900/20' : ''"
+                    data-allow-link-menu="1"
+                    @contextmenu.prevent="openMenu($event, row)"
+                  >
+                    <td class="p-2">{{ idx + 1 }}</td>
+                    <td class="p-2">
+                      <button
+                        class="text-lg leading-none"
+                        :class="row.starred ? 'text-amber-300' : 'text-slate-500'"
+                        @click.stop="toggleStar(row)"
+                      >
+                        {{ row.starred ? '★' : '☆' }}
+                      </button>
+                    </td>
+                    <td class="p-2 text-slate-200">#{{ row.link_id }}</td>
+                    <td class="p-2 text-neonBlue">
+                      {{ Number(row.speed_k || 0).toFixed(1) }}
+                    </td>
+                    <td class="p-2">
+                      <button
+                        class="w-full text-left bg-transparent border-0 p-0 text-slate-200 hover:text-neonGreen"
+                        :title="`单击修改 #${row.link_id} 的国家`"
+                        @click.stop="editCountry(row)"
+                      >
+                        {{ row.country || 'unknown' }}
+                      </button>
+                    </td>
+                    <td class="p-2 text-xs text-slate-400">
+                      {{ row.last_use || '-' }}
+                    </td>
+                    <td class="p-2 truncate" :title="row.link">
+                      <span v-if="row.selected" class="text-emerald-300 mr-2"
+                        >[已选择]</span
+                      >{{ shortLink(row.link) }}
+                    </td>
+                  </tr>
+                  <tr v-if="topLinks.length===0">
+                    <td colspan="7" class="p-4 text-center text-slate-400">
+                      没有测速数据
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="grid lg:grid-cols-[1.2fr_1fr] gap-4">
+            <div class="glass rounded-2xl p-4">
+              <h3 class="font-semibold mb-2">状态日志</h3>
+              <div
+                ref="consoleBox"
+                class="console h-[380px] overflow-y-auto rounded-xl border border-slate-700 bg-black/60 p-3 text-xs leading-5"
+              >
+                <div v-for="line in logs" :key="line.id" class="text-slate-300">
+                  <span class="text-slate-500">[{{ line.time }}]</span>
+                  <span
+                    :class="line.level==='error' ? 'text-red-400' : line.level==='warn' ? 'text-amber-400' : 'text-sky-300'"
+                  >
+                    {{ line.level.toUpperCase() }}
+                  </span>
+                  <span>{{ line.message }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="glass rounded-2xl p-4">
+              <h3 class="font-semibold mb-2">进程状态</h3>
+              <div class="space-y-2 max-h-[380px] overflow-auto pr-1">
+                <div
+                  v-for="p in processes"
+                  :key="`${p.kind}-${p.pid}-${p.website_id}-${p.port}`"
+                  class="rounded-lg border border-slate-700 p-2 text-xs bg-slate-900/70"
+                >
+                  <div
+                    class="font-semibold"
+                    :class="p.kind==='main' ? 'text-neonOrange' : p.kind==='http' ? 'text-neonGreen' : 'text-neonBlue'"
+                  >
+                    {{ p.kind==='main' ? '主路由' : p.website }}
+                  </div>
+                  <div>
+                    PID: {{ p.kind==='http' ? '-' : p.pid }} | Port: {{ p.port
+                    }}
+                  </div>
+                  <div class="truncate" :title="p.link">
+                    {{ shortLink(p.link) }}
+                  </div>
+                </div>
+                <div v-if="processes.length===0" class="text-slate-400 text-sm">
+                  暂无运行中的进程
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div
+        v-if="context.visible"
+        class="context-menu glass rounded-lg p-2 text-sm"
+        :style="{top: context.y + 'px', left: context.x + 'px'}"
+      >
+        <button class="btn btn-main w-full" @click="startByLink">
+          启动该连接
+        </button>
+      </div>
+
+      <div
+        v-if="dialog.visible"
+        class="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-3"
+      >
+        <div class="glass rounded-2xl p-4 w-full max-w-lg">
+          <h3 class="font-semibold text-lg mb-3">
+            {{ dialog.editing ? '编辑网站' : '添加网站' }}
+          </h3>
+          <div class="grid gap-2 text-sm">
+            <label class="text-slate-300">网站名（仅用于界面识别）</label>
+            <input
+              v-model="dialog.form.name"
+              placeholder="例如：YouTube"
+              class="px-3 py-2 rounded-lg bg-slate-900 border border-slate-700"
+            />
+            <label class="text-slate-300"
+              >website address（测速目标，未填时默认 youtube.com）</label
+            >
+            <input
+              v-model="dialog.form.address"
+              placeholder="例如：youtube.com 或 https://youtube.com"
+              class="px-3 py-2 rounded-lg bg-slate-900 border border-slate-700"
+            />
+            <label class="text-slate-300"
+              >大文件下载地址（填了就按下载测速，不填则按 address 测）</label
+            >
+            <input
+              v-model="dialog.form.download_url"
+              placeholder="例如：https://example.com/file.zip"
+              class="px-3 py-2 rounded-lg bg-slate-900 border border-slate-700"
+            />
+            <label class="text-slate-300"
+              >路由匹配值（命中后走此网站端口，可逗号分隔）</label
+            >
+            <input
+              v-model="dialog.form.match_rule"
+              placeholder="例如：*.youtube.com,youtube.com"
+              class="px-3 py-2 rounded-lg bg-slate-900 border border-slate-700"
+            />
+            <label class="text-slate-300"
+              >端口（默认项固定 10601，其它项 10603-10700）</label
+            >
+            <input
+              v-model.number="dialog.form.port"
+              type="number"
+              placeholder="例如：10611"
+              class="px-3 py-2 rounded-lg bg-slate-900 border border-slate-700"
+            />
+            <label class="text-sm text-slate-300">
+              <input
+                v-model="dialog.form.http_enabled"
+                type="checkbox"
+                class="mr-2"
+              />启用HTTP代理（可单独点击“启动Http/关闭Http”）
+            </label>
+            <label class="text-slate-300"
+              >HTTP端口（可留空=自动使用 socks端口+1，例如 10601 ->
+              10602）</label
+            >
+            <input
+              v-model.number="dialog.form.http_port"
+              type="number"
+              placeholder="留空或0表示自动+1；例如：10732"
+              class="px-3 py-2 rounded-lg bg-slate-900 border border-slate-700"
+            />
+            <label class="text-sm text-slate-300">
+              <input
+                v-model="dialog.form.is_enabled"
+                type="checkbox"
+                class="mr-2"
+              />规则启用（在“启动所有规则”时会自动启动）
+            </label>
+          </div>
+          <div class="mt-3 text-xs text-slate-400">
+            字段说明：address=测速目标；download_url=下载测速地址；match_rule=主路由域名匹配；port=网站socks端口；http_port=HTTP入口端口。新增/编辑端口限制：10603-10700，且不能重复（默认设置端口固定
+            10601，10602保留给默认HTTP）。
+          </div>
+          <div class="mt-4 flex justify-end gap-2">
+            <button class="btn btn-subtle" @click="closeDialog">取消</button>
+            <button class="btn btn-green" @click="saveDialog">保存</button>
+          </div>
+        </div>
+      </div>
+
+      <div
+        v-if="importDialog.visible"
+        class="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-3"
+      >
+        <div class="glass rounded-2xl p-4 w-full max-w-xl">
+          <h3 class="font-semibold text-lg mb-3">导入 base64 链接 URL</h3>
+          <div class="grid gap-2 text-sm">
+            <div class="text-xs text-slate-400">
+              下载后会自动 base64 解码、排重并入库。优先尝试默认 10601
+              代理，失败时回退本地网络。当前版本仅取前 1000 条链接入库。
+            </div>
+            <label class="text-slate-300">URL</label>
+            <input
+              v-model.trim="importDialog.url"
+              placeholder="https://example.com/server_base64.txt"
+              class="px-3 py-2 rounded-lg bg-slate-900 border border-slate-700"
+            />
+          </div>
+          <div class="mt-4 flex justify-end gap-2">
+            <button class="btn btn-subtle" @click="closeImportURLDialog">
+              取消
+            </button>
+            <button class="btn btn-green" @click="submitImportURLDialog">
+              开始导入
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div
+        v-if="settings.visible"
+        class="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-3"
+      >
+        <div class="glass rounded-2xl p-4 w-full max-w-md">
+          <h3 class="font-semibold text-lg mb-3">测速设置</h3>
+          <div class="grid gap-2 text-sm">
+            <label class="text-slate-300">每次测试连接条数</label>
+            <input
+              v-model.number="settings.form.speedtest_limit"
+              type="number"
+              min="1"
+              max="5000"
+              class="px-3 py-2 rounded-lg bg-slate-900 border border-slate-700"
+            />
+            <label class="text-slate-300">测速连接列表显示条数</label>
+            <input
+              v-model.number="settings.form.top_links_limit"
+              type="number"
+              min="1"
+              max="200"
+              class="px-3 py-2 rounded-lg bg-slate-900 border border-slate-700"
+            />
+            <p class="text-xs text-slate-400">
+              测速逻辑：默认并发固定为 5（每个连接启动 1 个 xray），然后依次测速所有网站；已存在(连接+网站)结果会自动跳过不重复测。IP属地测试固定取当前网站速度最快的前 3 个代理，通过
+              api.myip.com 回填国家。
+            </p>
+            <div
+              class="mt-2 rounded-lg border border-slate-700 bg-slate-900/60 p-3 text-xs text-slate-300"
+            >
+              高级版本请访问
+              <a
+                href="https://github.com/Ilikeproton/free-v2ray-ssr-trojan-clash-nodes"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-sky-300 underline"
+                >github</a
+              >。高级版本包含更多测试并发连接，高速找到可用链接；免费代理列表增加到
+              5000；网站路由表无限制。
+            </div>
+          </div>
+          <div class="mt-4 flex justify-end gap-2">
+            <button class="btn btn-subtle" @click="closeSettings">取消</button>
+            <button class="btn btn-green" @click="saveSettings">保存</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="toast-wrap pointer-events-none">
+        <div
+          v-for="t in toasts"
+          :key="t.id"
+          class="toast pointer-events-auto"
+          :class="t.type==='ok' ? 'toast-ok' : t.type==='warn' ? 'toast-warn' : t.type==='error' ? 'toast-error' : 'toast-info'"
+        >
+          <div class="font-semibold text-slate-100">{{ t.title }}</div>
+          <div class="text-slate-300 mt-1 break-all">{{ t.message }}</div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const { createApp, nextTick } = Vue;
+      const defaultBase64ImportURL =
+        "https://raw.githubusercontent.com/chengaopan/AutoMergePublicNodes/refs/heads/master/list.txt";
+      const advancedGithubURL =
+        "https://github.com/Ilikeproton/free-v2ray-ssr-trojan-clash-nodes";
+      const freeProxyTopLimit = 1000;
+      const websiteTopLimit = 3;
+
+      createApp({
+        data() {
+          return {
+            websites: [],
+            selectedWebsiteId: null,
+            topLinks: [],
+            totalLinksCount: 0,
+            processes: [],
+            logs: [],
+            logSince: 0,
+            pidInput: null,
+            timer: null,
+            toasts: [],
+            toastSeq: 0,
+            pendingDeleteId: null,
+            pendingDeleteAt: 0,
+            apiBase:
+              location.protocol === "file:" ? "http://127.0.0.1:8333" : "",
+            context: { visible: false, x: 0, y: 0, row: null },
+            dialog: {
+              visible: false,
+              editing: false,
+              id: null,
+              form: {
+                name: "",
+                address: "youtube.com",
+                download_url: "",
+                match_rule: "*",
+                port: 10603,
+                http_enabled: false,
+                http_port: 0,
+                is_enabled: true,
+              },
+            },
+            importDialog: {
+              visible: false,
+              url: defaultBase64ImportURL,
+            },
+            settings: {
+              visible: false,
+              form: {
+                speedtest_limit: 500,
+                top_links_limit: 20,
+              },
+            },
+          };
+        },
+        mounted() {
+          this.refreshSettings();
+          this.refreshAll();
+          this.timer = setInterval(() => {
+            this.pollLogs();
+            this.refreshProcesses();
+            this.refreshWebsites(false);
+            this.refreshLinks();
+          }, 1200);
+        },
+        beforeUnmount() {
+          clearInterval(this.timer);
+        },
+        methods: {
+          async api(path, method = "GET", body = null) {
+            const url = path.startsWith("http")
+              ? path
+              : `${this.apiBase}${path}`;
+            let res;
+            try {
+              res = await fetch(url, {
+                method,
+                headers: { "Content-Type": "application/json" },
+                body: body ? JSON.stringify(body) : null,
+              });
+            } catch (err) {
+              throw new Error(`连接后端失败（${url}）: ${err.message}`);
+            }
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok || data.ok === false) {
+              throw new Error(data.error || `HTTP ${res.status}`);
+            }
+            return data;
+          },
+          notify(message, type = "info", title = "提示") {
+            const id = ++this.toastSeq;
+            this.toasts.push({ id, title, message, type });
+            setTimeout(() => {
+              this.toasts = this.toasts.filter((v) => v.id !== id);
+            }, 3200);
+          },
+          async refreshAll() {
+            await this.refreshWebsites(true);
+            await this.refreshProcesses();
+            await this.refreshLinks();
+            await this.pollLogs(true);
+          },
+          async refreshSettings() {
+            try {
+              const data = await this.api("/api/settings");
+              const items = data.items || {};
+              this.settings.form.speedtest_limit = Number(
+                items.speedtest_limit || 500,
+              );
+              this.settings.form.top_links_limit = Number(
+                items.top_links_limit || 20,
+              );
+            } catch (e) {
+              this.notify(e.message, "error", "设置读取失败");
+            }
+          },
+          async refreshWebsites(initSelect = true) {
+            try {
+              const data = await this.api("/api/websites");
+              this.websites = data.items || [];
+              if (
+                initSelect &&
+                this.websites.length > 0 &&
+                !this.selectedWebsiteId
+              ) {
+                this.selectedWebsiteId = this.websites[0].id;
+              }
+              if (
+                this.selectedWebsiteId &&
+                !this.websites.find((v) => v.id === this.selectedWebsiteId)
+              ) {
+                this.selectedWebsiteId = this.websites[0]?.id || null;
+              }
+            } catch (e) {
+              this.notify(e.message, "error", "网站列表读取失败");
+            }
+          },
+          async refreshLinks() {
+            if (!this.selectedWebsiteId) {
+              this.topLinks = [];
+              this.totalLinksCount = 0;
+              return;
+            }
+            try {
+              const data = await this.api(
+                `/api/websites/${this.selectedWebsiteId}/top-links`,
+              );
+              this.topLinks = data.items || [];
+              this.totalLinksCount = Number(data.total_links || 0);
+            } catch (e) {
+              this.notify(e.message, "error", "测速数据读取失败");
+            }
+          },
+          async refreshProcesses() {
+            try {
+              const data = await this.api("/api/processes");
+              this.processes = data.items || [];
+            } catch (_) {}
+          },
+          async pollLogs(force = false) {
+            try {
+              const qs = force ? "?since=0" : `?since=${this.logSince}`;
+              const data = await this.api("/api/logs" + qs);
+              const items = data.items || [];
+              if (force) {
+                this.logs = items;
+              } else if (items.length) {
+                this.logs.push(...items);
+              }
+              this.logSince = data.next_since || this.logSince;
+              if (this.logs.length > 500) this.logs = this.logs.slice(-500);
+              await nextTick();
+              const box = this.$refs.consoleBox;
+              if (box) box.scrollTop = box.scrollHeight;
+            } catch (_) {}
+          },
+          selectWebsite(id) {
+            this.selectedWebsiteId = id;
+            this.refreshLinks();
+          },
+          shortLink(link) {
+            const raw = String(link || "");
+            return raw.length > 60 ? raw.slice(0, 60) + "..." : raw;
+          },
+          async toggleStar(row) {
+            if (!this.selectedWebsiteId || !row || !row.link_id) return;
+            try {
+              await this.api(
+                `/api/websites/${this.selectedWebsiteId}/star`,
+                "POST",
+                {
+                  link_id: Number(row.link_id),
+                  starred: !row.starred,
+                },
+              );
+              await this.refreshLinks();
+              this.notify(
+                !row.starred
+                  ? `已加星 #${row.link_id}`
+                  : `已取消加星 #${row.link_id}`,
+                "ok",
+              );
+            } catch (e) {
+              this.notify(e.message, "error");
+            }
+          },
+          async editCountry(row) {
+            if (!row || !row.link_id) return;
+            const current = String(row.country || "");
+            const next = window.prompt(
+              `修改连接 #${row.link_id} 的国家（留空表示 unknown）`,
+              current,
+            );
+            if (next === null) return;
+            const country = String(next).trim();
+            try {
+              await this.api(`/api/links/${row.link_id}/country`, "PUT", {
+                country,
+              });
+              row.country = country;
+              this.notify(
+                `国家已更新：#${row.link_id} -> ${country || "unknown"}`,
+                "ok",
+              );
+            } catch (e) {
+              this.notify(e.message, "error");
+            }
+          },
+          async startAll() {
+            try {
+              await this.api("/api/start-all", "POST");
+              await this.refreshAll();
+            } catch (e) {
+              this.notify(e.message);
+            }
+          },
+          async startRules() {
+            try {
+              await this.api("/api/start-rules", "POST");
+              await this.refreshAll();
+            } catch (e) {
+              this.notify(e.message);
+            }
+          },
+          async stopAll() {
+            try {
+              await this.api("/api/stop-all", "POST");
+              await this.refreshAll();
+            } catch (e) {
+              this.notify(e.message);
+            }
+          },
+          async killAllXray() {
+            try {
+              await this.api("/api/kill-all-xray", "POST");
+              await this.refreshAll();
+              this.notify("所有 xray 进程已处理", "ok");
+            } catch (e) {
+              this.notify(e.message, "error");
+            }
+          },
+          async killPID() {
+            if (!this.pidInput) return this.notify("请输入 PID", "warn");
+            try {
+              await this.api("/api/kill-pid", "POST", {
+                pid: Number(this.pidInput),
+              });
+              this.pidInput = null;
+              await this.refreshAll();
+              this.notify("PID 已处理", "ok");
+            } catch (e) {
+              this.notify(e.message, "error");
+            }
+          },
+          async minimizeWindow() {
+            try {
+              await this.api("/api/window/minimize", "POST");
+            } catch (e) {
+              this.notify(e.message, "warn", "窗口操作失败");
+            }
+          },
+          async closeApp() {
+            try {
+              await this.api("/api/window/close", "POST");
+            } catch (e) {
+              this.notify(e.message, "error", "关闭失败");
+              try {
+                window.close();
+              } catch (_) {}
+            }
+          },
+          openSettings() {
+            this.settings.visible = true;
+            this.refreshSettings();
+          },
+          closeSettings() {
+            this.settings.visible = false;
+          },
+          async saveSettings() {
+            const limit = Number(this.settings.form.speedtest_limit || 0);
+            const topLinksLimit = Number(
+              this.settings.form.top_links_limit || 0,
+            );
+            if (limit < 1 || limit > 5000)
+              return this.notify("每次测试连接条数需在 1-5000");
+            if (topLinksLimit < 1 || topLinksLimit > 200)
+              return this.notify("测速连接列表条数需在 1-200");
+            try {
+              await this.api("/api/settings", "PUT", {
+                speedtest_limit: limit,
+                top_links_limit: topLinksLimit,
+              });
+              this.settings.visible = false;
+              await this.refreshLinks();
+              this.notify("设置已保存", "ok");
+            } catch (e) {
+              this.notify(e.message, "error");
+            }
+          },
+          async startSite(id) {
+            try {
+              await this.api(`/api/websites/${id}/start`, "POST");
+              await this.refreshAll();
+            } catch (e) {
+              this.notify(e.message, "error");
+            }
+          },
+          async stopSite(id) {
+            try {
+              await this.api(`/api/websites/${id}/stop`, "POST");
+              await this.refreshAll();
+            } catch (e) {
+              this.notify(e.message, "error");
+            }
+          },
+          async startSiteHttp(id) {
+            try {
+              await this.api(`/api/websites/${id}/start-http`, "POST");
+              await this.refreshAll();
+            } catch (e) {
+              this.notify(e.message, "error");
+            }
+          },
+          async stopSiteHttp(id) {
+            try {
+              await this.api(`/api/websites/${id}/stop-http`, "POST");
+              await this.refreshAll();
+            } catch (e) {
+              this.notify(e.message, "error");
+            }
+          },
+          async runSpeedTestAll() {
+            try {
+              await this.api("/api/speedtest/all", "POST");
+              this.notify("已开始测试全部网站（已测过自动跳过）", "ok");
+            } catch (e) {
+              this.notify(e.message, "error");
+            }
+          },
+          async runSpeedTestCurrent() {
+            if (!this.selectedWebsiteId)
+              return this.notify("请选择网站", "warn");
+            try {
+              await this.api(
+                `/api/websites/${this.selectedWebsiteId}/speedtest`,
+                "POST",
+              );
+              this.notify("已开始测试当前网站（已测过自动跳过）", "ok");
+            } catch (e) {
+              this.notify(e.message, "error");
+            }
+          },
+          async runIPCountryCurrent() {
+            if (!this.selectedWebsiteId)
+              return this.notify("请选择网站", "warn");
+            try {
+              const data = await this.api(
+                `/api/websites/${this.selectedWebsiteId}/ip-country`,
+                "POST",
+              );
+              await this.refreshLinks();
+              const tested = Number(data.tested || 0);
+              const updated = Number(data.updated || 0);
+              const skipped = Number(data.skipped || 0);
+              if (tested === 0 && skipped > 0) {
+                this.notify(`前 ${skipped} 条候选代理都已测试过IP属地`, "ok");
+              } else {
+                this.notify(
+                  `IP属地测试完成：已更新 ${updated} 条，已测试 ${tested} 条，跳过 ${skipped} 条`,
+                  "ok",
+                );
+              }
+            } catch (e) {
+              this.notify(e.message, "error");
+            }
+          },
+          async importRemoteBase64Links() {
+            try {
+              const data = await this.api(
+                "/api/links/import-remote-base64",
+                "POST",
+              );
+              await this.refreshAll();
+              this.notify(this.formatImportResultMessage(data), "ok");
+            } catch (e) {
+              this.notify(e.message, "error");
+            }
+          },
+          openImportURLDialog() {
+            if (!this.importDialog.url) {
+              this.importDialog.url = defaultBase64ImportURL;
+            }
+            this.importDialog.visible = true;
+          },
+          closeImportURLDialog() {
+            this.importDialog.visible = false;
+          },
+          formatImportResultMessage(data) {
+            const via =
+              data.via === "default-socks" ? "默认10601代理" : "本地网络";
+            return `导入完成：${via}，解析 ${Number(data.total || 0)} 条（前${freeProxyTopLimit}条），新增入库 ${Number(data.count || 0)} 条`;
+          },
+          showAdvancedUpgradePrompt(reason = "") {
+            const msg =
+              `${reason ? reason + "\n\n" : ""}` +
+              `高级版本请访问：${advancedGithubURL}\n` +
+              "高级版本包含更多测试并发连接，高速找到可用链接。\n" +
+              "免费代理列表增加到 5000，网站路由表无限制。\n\n" +
+              "是否现在打开 GitHub？";
+            if (window.confirm(msg)) {
+              try {
+                window.open(advancedGithubURL, "_blank");
+              } catch (_) {}
+            }
+          },
+          async submitImportURLDialog() {
+            const rawURL = (this.importDialog.url || "").trim();
+            if (!rawURL) return this.notify("导入URL不能为空", "warn");
+            try {
+              const data = await this.api(
+                "/api/links/import-remote-base64",
+                "POST",
+                { url: rawURL },
+              );
+              this.importDialog.visible = false;
+              await this.refreshAll();
+              this.notify(this.formatImportResultMessage(data), "ok");
+            } catch (e) {
+              this.notify(e.message, "error");
+            }
+          },
+          openMenu(evt, row) {
+            this.context = {
+              visible: true,
+              x: evt.clientX,
+              y: evt.clientY,
+              row,
+            };
+          },
+          closeMenu() {
+            this.context.visible = false;
+          },
+          async startByLink() {
+            if (!this.selectedWebsiteId || !this.context.row) return;
+            try {
+              await this.api(
+                `/api/websites/${this.selectedWebsiteId}/start-link`,
+                "POST",
+                { link_id: this.context.row.link_id },
+              );
+              this.context.visible = false;
+              await this.refreshAll();
+            } catch (e) {
+              this.notify(e.message, "error");
+            }
+          },
+          openCreate() {
+            if ((this.websites || []).length >= websiteTopLimit) {
+              this.showAdvancedUpgradePrompt(
+                `当前版本网站路由表最多 ${websiteTopLimit} 个。`,
+              );
+              return;
+            }
+            this.dialog.visible = true;
+            this.dialog.editing = false;
+            this.dialog.id = null;
+            this.dialog.form = {
+              name: "",
+              address: "youtube.com",
+              download_url: "",
+              match_rule: "*",
+              port: 10603,
+              http_enabled: false,
+              http_port: 0,
+              is_enabled: true,
+            };
+          },
+          openEdit(site) {
+            this.dialog.visible = true;
+            this.dialog.editing = true;
+            this.dialog.id = site.id;
+            this.dialog.form = {
+              name: site.name,
+              address: site.address,
+              download_url: site.download_url,
+              match_rule: site.match_rule,
+              port: site.port,
+              http_enabled: !!site.http_enabled,
+              http_port: Number(site.http_port || 0),
+              is_enabled: !!site.is_enabled,
+            };
+          },
+          closeDialog() {
+            this.dialog.visible = false;
+          },
+          validatePort(form) {
+            if (Number(form.port) === 10601) return true;
+            return Number(form.port) >= 10603 && Number(form.port) <= 10700;
+          },
+          validateHttpPort(form) {
+            const hp = Number(form.http_port || 0);
+            if (hp === 0) return true;
+            if (hp < 1 || hp > 65535) return false;
+            return hp !== Number(form.port);
+          },
+          async saveDialog() {
+            const f = this.dialog.form;
+            if (!f.name) return this.notify("网站名不能为空", "warn");
+            if (
+              !this.dialog.editing &&
+              (this.websites || []).length >= websiteTopLimit
+            ) {
+              this.showAdvancedUpgradePrompt(
+                `当前版本网站路由表最多 ${websiteTopLimit} 个。`,
+              );
+              return;
+            }
+            if (!this.validatePort(f))
+              return this.notify(
+                "端口需在 10603-10700，默认设置固定为10601，10602保留给默认HTTP",
+                "warn",
+              );
+            if (!this.validateHttpPort(f))
+              return this.notify(
+                "HTTP端口需在 1-65535，且不能与网站端口相同",
+                "warn",
+              );
+
+            try {
+              const payload = {
+                ...f,
+                port: Number(f.port),
+                http_enabled: !!f.http_enabled,
+                http_port: Number(f.http_port || 0),
+                is_enabled: !!f.is_enabled,
+              };
+              if (this.dialog.editing) {
+                await this.api(
+                  `/api/websites/${this.dialog.id}`,
+                  "PUT",
+                  payload,
+                );
+              } else {
+                await this.api("/api/websites", "POST", payload);
+              }
+              this.dialog.visible = false;
+              await this.refreshAll();
+              this.notify("保存成功", "ok");
+            } catch (e) {
+              if (String(e.message || "").toLowerCase().includes("website limit reached")) {
+                this.showAdvancedUpgradePrompt(
+                  `当前版本网站路由表最多 ${websiteTopLimit} 个。`,
+                );
+              }
+              this.notify(e.message, "error");
+            }
+          },
+          async removeSite(site) {
+            if (site.port === 10601)
+              return this.notify("默认设置不能删除", "warn");
+            const now = Date.now();
+            if (
+              !(
+                this.pendingDeleteId === site.id &&
+                now - this.pendingDeleteAt < 3000
+              )
+            ) {
+              this.pendingDeleteId = site.id;
+              this.pendingDeleteAt = now;
+              this.notify(
+                `再次点击删除 ${site.name} 以确认`,
+                "warn",
+                "删除确认",
+              );
+              return;
+            }
+            this.pendingDeleteId = null;
+            this.pendingDeleteAt = 0;
+            try {
+              await this.api(`/api/websites/${site.id}`, "DELETE");
+              await this.refreshAll();
+              this.notify("删除成功", "ok");
+            } catch (e) {
+              this.notify(e.message, "error");
+            }
+          },
+        },
+      }).mount("#app");
+    </script>
+  </body>
+</html>

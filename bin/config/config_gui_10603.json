@@ -1,0 +1,47 @@
+{
+  "inbounds": [
+    {
+      "listen": "0.0.0.0",
+      "port": 10603,
+      "protocol": "socks",
+      "settings": {
+        "auth": "noauth",
+        "udp": true
+      }
+    }
+  ],
+  "log": {
+    "loglevel": "warning"
+  },
+  "outbounds": [
+    {
+      "protocol": "hysteria",
+      "settings": {
+        "address": "181.214.99.162",
+        "port": 35000,
+        "version": 2
+      },
+      "streamSettings": {
+        "finalmask": {
+          "udp": [
+            {
+              "settings": {
+                "password": "@JavidnamanIran-Javid-SHAH-KingRezaPahlavi"
+              },
+              "type": "salamander"
+            }
+          ]
+        },
+        "hysteriaSettings": {
+          "auth": "b4bd0613-ff7c-4f2f-954d-185915e6ddad",
+          "version": 2
+        },
+        "network": "hysteria",
+        "security": "tls",
+        "tlsSettings": {
+          "serverName": "api.kermanshahi.org"
+        }
+      }
+    }
+  ]
+}

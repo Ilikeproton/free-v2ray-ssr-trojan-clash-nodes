@@ -1,0 +1,33 @@
+{
+  "inbounds": [
+    {
+      "listen": "0.0.0.0",
+      "port": 10603,
+      "protocol": "socks",
+      "settings": {
+        "auth": "noauth",
+        "udp": true
+      }
+    }
+  ],
+  "log": {
+    "loglevel": "warning"
+  },
+  "outbounds": [
+    {
+      "protocol": "shadowsocks",
+      "settings": {
+        "servers": [
+          {
+            "address": "57.129.140.88",
+            "method": "chacha20-ietf-poly1305",
+            "ota": false,
+            "password": "k1v5g9FefdoO",
+            "port": 8388
+          }
+        ]
+      },
+      "streamSettings": {}
+    }
+  ]
+}

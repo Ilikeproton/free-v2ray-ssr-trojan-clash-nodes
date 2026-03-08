@@ -1,0 +1,38 @@
+{
+  "inbounds": [
+    {
+      "listen": "0.0.0.0",
+      "port": 10601,
+      "protocol": "socks",
+      "settings": {
+        "auth": "noauth",
+        "udp": true
+      }
+    }
+  ],
+  "log": {
+    "loglevel": "warning"
+  },
+  "outbounds": [
+    {
+      "protocol": "hysteria",
+      "settings": {
+        "address": "62.210.124.146",
+        "port": 22000,
+        "version": 2
+      },
+      "streamSettings": {
+        "hysteriaSettings": {
+          "auth": "dongtaiwang.com",
+          "version": 2
+        },
+        "network": "hysteria",
+        "security": "tls",
+        "tlsSettings": {
+          "allowInsecure": true,
+          "serverName": "www.microsoft.com"
+        }
+      }
+    }
+  ]
+}

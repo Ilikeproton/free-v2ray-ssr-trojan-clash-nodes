@@ -1,0 +1,8 @@
+# 配置文件：每行 key=value
+port=10911
+testurl=api.aliyun.com
+connection=50
+core=xray
+tserver=server20260226.txt
+qserver=servertested_314895_gosspublic_alicdn_com_20260227.txt
+downloadlink=https://gosspublic.alicdn.com/ossbrowser/1.18.0/oss-browser-linux-x64.zip

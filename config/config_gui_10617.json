@@ -1,0 +1,33 @@
+{
+  "inbounds": [
+    {
+      "listen": "0.0.0.0",
+      "port": 10617,
+      "protocol": "socks",
+      "settings": {
+        "auth": "noauth",
+        "udp": true
+      }
+    }
+  ],
+  "log": {
+    "loglevel": "warning"
+  },
+  "outbounds": [
+    {
+      "protocol": "shadowsocks",
+      "settings": {
+        "servers": [
+          {
+            "address": "172.99.190.39",
+            "method": "aes-256-gcm",
+            "ota": false,
+            "password": "g5MeD6Ft3CWlJId",
+            "port": 5003
+          }
+        ]
+      },
+      "streamSettings": {}
+    }
+  ]
+}

@@ -1,0 +1,251 @@
+{
+  "inbounds": [
+    {
+      "listen": "0.0.0.0",
+      "port": 10600,
+      "protocol": "socks",
+      "settings": {
+        "auth": "noauth",
+        "udp": true
+      },
+      "sniffing": {
+        "destOverride": [
+          "http",
+          "tls",
+          "quic"
+        ],
+        "enabled": true
+      },
+      "tag": "main-in"
+    }
+  ],
+  "log": {
+    "loglevel": "warning"
+  },
+  "outbounds": [
+    {
+      "protocol": "socks",
+      "settings": {
+        "servers": [
+          {
+            "address": "127.0.0.1",
+            "port": 10627
+          }
+        ]
+      },
+      "tag": "site-103"
+    },
+    {
+      "protocol": "socks",
+      "settings": {
+        "servers": [
+          {
+            "address": "127.0.0.1",
+            "port": 10625
+          }
+        ]
+      },
+      "tag": "site-102"
+    },
+    {
+      "protocol": "socks",
+      "settings": {
+        "servers": [
+          {
+            "address": "127.0.0.1",
+            "port": 10623
+          }
+        ]
+      },
+      "tag": "site-101"
+    },
+    {
+      "protocol": "socks",
+      "settings": {
+        "servers": [
+          {
+            "address": "127.0.0.1",
+            "port": 10621
+          }
+        ]
+      },
+      "tag": "site-100"
+    },
+    {
+      "protocol": "socks",
+      "settings": {
+        "servers": [
+          {
+            "address": "127.0.0.1",
+            "port": 10617
+          }
+        ]
+      },
+      "tag": "site-99"
+    },
+    {
+      "protocol": "socks",
+      "settings": {
+        "servers": [
+          {
+            "address": "127.0.0.1",
+            "port": 10615
+          }
+        ]
+      },
+      "tag": "site-98"
+    },
+    {
+      "protocol": "socks",
+      "settings": {
+        "servers": [
+          {
+            "address": "127.0.0.1",
+            "port": 10613
+          }
+        ]
+      },
+      "tag": "site-97"
+    },
+    {
+      "protocol": "socks",
+      "settings": {
+        "servers": [
+          {
+            "address": "127.0.0.1",
+            "port": 10619
+          }
+        ]
+      },
+      "tag": "site-8"
+    },
+    {
+      "protocol": "socks",
+      "settings": {
+        "servers": [
+          {
+            "address": "127.0.0.1",
+            "port": 10609
+          }
+        ]
+      },
+      "tag": "site-7"
+    },
+    {
+      "protocol": "socks",
+      "settings": {
+        "servers": [
+          {
+            "address": "127.0.0.1",
+            "port": 10611
+          }
+        ]
+      },
+      "tag": "site-5"
+    },
+    {
+      "protocol": "socks",
+      "settings": {
+        "servers": [
+          {
+            "address": "127.0.0.1",
+            "port": 10607
+          }
+        ]
+      },
+      "tag": "site-4"
+    },
+    {
+      "protocol": "socks",
+      "settings": {
+        "servers": [
+          {
+            "address": "127.0.0.1",
+            "port": 10605
+          }
+        ]
+      },
+      "tag": "default-proxy"
+    }
+  ],
+  "routing": {
+    "domainStrategy": "AsIs",
+    "rules": [
+      {
+        "domain": [
+          "regexp:^(?:.*\\.)?youtube\\.com$"
+        ],
+        "outboundTag": "site-102",
+        "type": "field"
+      },
+      {
+        "domain": [
+          "regexp:^(?:.*\\.)?tesco\\.com$"
+        ],
+        "outboundTag": "site-101",
+        "type": "field"
+      },
+      {
+        "domain": [
+          "regexp:^(?:.*\\.)?pinterest\\.com$"
+        ],
+        "outboundTag": "site-100",
+        "type": "field"
+      },
+      {
+        "domain": [
+          "regexp:^.*snigelweb\\.com.*$"
+        ],
+        "outboundTag": "site-99",
+        "type": "field"
+      },
+      {
+        "domain": [
+          "regexp:^.*googlesyndication\\.com.*$"
+        ],
+        "outboundTag": "site-98",
+        "type": "field"
+      },
+      {
+        "domain": [
+          "regexp:^.*doubleclick\\.net.*$"
+        ],
+        "outboundTag": "site-97",
+        "type": "field"
+      },
+      {
+        "domain": [
+          "regexp:^(?:.*\\.)?yuewen\\.com$"
+        ],
+        "outboundTag": "site-8",
+        "type": "field"
+      },
+      {
+        "domain": [
+          "regexp:^(?:.*\\.)?qidian\\.com$"
+        ],
+        "outboundTag": "site-7",
+        "type": "field"
+      },
+      {
+        "domain": [
+          "regexp:^.*mage-b2\\.civitai\\..*$"
+        ],
+        "outboundTag": "site-5",
+        "type": "field"
+      },
+      {
+        "domain": [
+          "regexp:^(?:.*\\.)?civitai\\..*$"
+        ],
+        "outboundTag": "site-4",
+        "type": "field"
+      },
+      {
+        "network": "tcp,udp",
+        "outboundTag": "default-proxy",
+        "type": "field"
+      }
+    ]
+  }
+}

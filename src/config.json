@@ -1,0 +1,37 @@
+{
+  "inbounds": [
+    {
+      "listen": "0.0.0.0",
+      "port": 10401,
+      "protocol": "socks",
+      "settings": {
+        "auth": "noauth",
+        "udp": true
+      }
+    }
+  ],
+  "log": {
+    "loglevel": "warning"
+  },
+  "outbounds": [
+    {
+      "protocol": "trojan",
+      "settings": {
+        "servers": [
+          {
+            "address": "light-minnow.husky461.skin",
+            "password": "3787016276694802432",
+            "port": 443
+          }
+        ]
+      },
+      "streamSettings": {
+        "network": "tcp",
+        "security": "tls",
+        "tlsSettings": {
+          "serverName": "light-minnow.husky461.skin"
+        }
+      }
+    }
+  ]
+}
